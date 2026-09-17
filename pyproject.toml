@@ -1,0 +1,21 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "xray2jpeg"
+version = "0.1.0"
+description = "Portable TIFF -> JPEG converter for radiographs (Windows 7)"
+requires-python = ">=3.8"
+# Точные версии зафиксированы в requirements.txt / requirements-dev.txt.
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src", "."]
+markers = [
+    "vips: тест требует libvips",
+    "slow: долгий тест",
+]
