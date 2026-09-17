@@ -47,7 +47,8 @@ jobs:
           XRAY2JPEG_VIPS_DIR: ""
         run: |
           if (Test-Path dist\Xray2JpegSmoke\_internal\ucrtbase.dll) { throw "ucrtbase.dll попал в сборку" }
-          Write-Host ("DLL libvips в сборке: " + (Get-ChildItem dist\Xray2JpegSmoke\_internal\vips\*.dll).Count)
+          if (-not (Test-Path dist\Xray2JpegSmoke\_internal\libvips-42.dll)) { throw "libvips-42.dll нет в сборке" }
+          Write-Host ("DLL в _internal: " + (Get-ChildItem dist\Xray2JpegSmoke\_internal\*.dll).Count)
           $process = Start-Process -FilePath dist\Xray2JpegSmoke\Xray2JpegSmoke.exe -ArgumentList "--no-gui" -Wait -PassThru
           Get-Content -Encoding UTF8 dist\Xray2JpegSmoke\smoke_report.txt
           Remove-Item dist\Xray2JpegSmoke\smoke_report.txt

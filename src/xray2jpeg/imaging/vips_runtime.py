@@ -20,17 +20,17 @@ _pyvips = None
 def bundled_vips_dir():
     """Каталог с DLL libvips.
 
-    Собранное приложение использует только vips/ внутри сборки; переменная
-    XRAY2JPEG_VIPS_DIR учитывается лишь при запуске из исходников (тесты на Windows).
+    Собранное приложение использует только DLL из своей папки _internal;
+    переменная XRAY2JPEG_VIPS_DIR учитывается лишь при запуске из исходников
+    (тесты на Windows).
     """
     base = getattr(sys, "_MEIPASS", None)
+    if base:
+        return base
     override = os.environ.get("XRAY2JPEG_VIPS_DIR")
-    if override and not base:
+    if override:
         return override if os.path.isdir(override) else None
-    if not base:
-        return None
-    candidate = os.path.join(base, "vips")
-    return candidate if os.path.isdir(candidate) else None
+    return None
 
 
 def load_pyvips(concurrency=DEFAULT_CONCURRENCY):

@@ -150,7 +150,7 @@ def check_vips():
         return detail
     loaded = loaded_module_path("libvips-42.dll")
     if getattr(sys, "frozen", False):
-        expected = os.path.normcase(os.path.join(sys._MEIPASS, "vips"))
+        expected = os.path.normcase(os.path.join(sys._MEIPASS, ""))
         if not loaded or not os.path.normcase(loaded).startswith(expected):
             raise RuntimeError("libvips-42.dll загружена не из сборки: {} (ожидалось {})".format(loaded, expected))
     return "{}, загружена из {}".format(detail, loaded)

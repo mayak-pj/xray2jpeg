@@ -49,7 +49,7 @@ Portable-приложение для Windows 7 x64 (без прав админи
 | Tcl/Tk (tkinter) | из CPython 3.8.10 | BSD-style | да |
 | pyvips | 3.2.0 | MIT | да |
 | cffi | 1.17.1 (последняя с wheel cp38) | MIT | да |
-| libvips + зависимости (libtiff, libjpeg-turbo, glib, …) | 8.15.1, `vips-dev-w64-web` из libvips/build-win64-mxe; sha256 в `scripts/fetch_libvips.py` | LGPL-2.1+ и др. | да, DLL в `_internal\vips\` |
+| libvips + зависимости (libtiff, libjpeg-turbo, glib, …) | 8.15.1, `vips-dev-w64-web` из libvips/build-win64-mxe; sha256 в `scripts/fetch_libvips.py` | LGPL-2.1+ и др. | да, DLL в `_internal\` |
 | Pillow (резерв) | 10.4.0 | MIT-CMU | только если понадобится |
 | PyInstaller | 6.22.3 (поддерживает 3.8; bootloader собирается под уровень Windows 7) | GPL-2.0 с исключением для bootloader | нет (инструмент сборки) |
 | pytest | 8.3.5 (dev) | MIT | нет |

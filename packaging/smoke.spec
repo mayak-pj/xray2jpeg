@@ -7,8 +7,10 @@ import os
 
 ROOT = os.path.abspath(os.path.join(SPECPATH, ".."))
 VIPS_DIR = os.environ.get("XRAY2JPEG_VIPS_DIR") or os.path.join(ROOT, "build", "vips")
+# DLL кладутся в корень _internal: PyInstaller и так собирает туда зависимости,
+# отдельная подпапка приводила к дублированию всех DLL.
 vips_binaries = [
-    (os.path.join(VIPS_DIR, name), "vips")
+    (os.path.join(VIPS_DIR, name), ".")
     for name in sorted(os.listdir(VIPS_DIR))
     if name.lower().endswith(".dll")
 ]
