@@ -22,6 +22,17 @@ a = Analysis(
     excludes=["_libvips", "pyvips_binary"],
     noarchive=False,
 )
+
+# PyInstaller копирует UCRT (ucrtbase.dll, api-ms-win-*.dll) из системы сборочной машины
+# (Windows Server 2022, subsystem 10.0). На Windows 7 такие копии рядом с exe перекрыли бы
+# системный UCRT (KB2999226) — исключаем их, используется UCRT целевого ПК.
+def _is_system_crt(entry):
+    name = os.path.basename(entry[0]).lower()
+    return name == "ucrtbase.dll" or name.startswith("api-ms-win-")
+
+
+a.binaries = [entry for entry in a.binaries if not _is_system_crt(entry)]
+
 pyz = PYZ(a.pure)
 exe = EXE(
     pyz,

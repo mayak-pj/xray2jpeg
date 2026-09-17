@@ -72,7 +72,10 @@ def peak_memory_mb():
             counters.cb = ctypes.sizeof(Counters)
             kernel32 = ctypes.WinDLL("kernel32")
             kernel32.GetCurrentProcess.restype = wintypes.HANDLE
+            kernel32.GetCurrentProcess.argtypes = []
             psapi = ctypes.WinDLL("psapi")
+            psapi.GetProcessMemoryInfo.argtypes = [wintypes.HANDLE, ctypes.POINTER(Counters), wintypes.DWORD]
+            psapi.GetProcessMemoryInfo.restype = wintypes.BOOL
             if not psapi.GetProcessMemoryInfo(kernel32.GetCurrentProcess(), ctypes.byref(counters), counters.cb):
                 return None
             return counters.PeakWorkingSetSize / 1e6
@@ -82,6 +85,25 @@ def peak_memory_mb():
         return peak / 1e6 if sys.platform == "darwin" else peak / 1e3
     except Exception:
         return None
+
+
+def loaded_module_path(name):
+    """Полный путь, откуда процесс фактически загрузил DLL (None, если не загружена)."""
+    if sys.platform != "win32":
+        return None
+    from ctypes import wintypes
+
+    kernel32 = ctypes.WinDLL("kernel32")
+    kernel32.GetModuleHandleW.argtypes = [wintypes.LPCWSTR]
+    kernel32.GetModuleHandleW.restype = wintypes.HMODULE
+    kernel32.GetModuleFileNameW.argtypes = [wintypes.HMODULE, wintypes.LPWSTR, wintypes.DWORD]
+    kernel32.GetModuleFileNameW.restype = wintypes.DWORD
+    handle = kernel32.GetModuleHandleW(name)
+    if not handle:
+        return None
+    buffer = ctypes.create_unicode_buffer(32768)
+    length = kernel32.GetModuleFileNameW(handle, buffer, len(buffer))
+    return buffer.value if length else None
 
 
 def is_admin():
@@ -123,7 +145,26 @@ def check_tk():
 
 def check_vips():
     load_pyvips()
-    return "libvips {}, DLL: {}".format(vips_version(), bundled_vips_dir() or "системные")
+    detail = "libvips {}".format(vips_version())
+    if sys.platform != "win32":
+        return detail
+    loaded = loaded_module_path("libvips-42.dll")
+    if getattr(sys, "frozen", False):
+        expected = os.path.normcase(os.path.join(sys._MEIPASS, "vips"))
+        if not loaded or not os.path.normcase(loaded).startswith(expected):
+            raise RuntimeError("libvips-42.dll загружена не из сборки: {} (ожидалось {})".format(loaded, expected))
+    return "{}, загружена из {}".format(detail, loaded)
+
+
+def check_runtime_dlls():
+    """Откуда загружены CRT и Python: UCRT должен быть системным (System32)."""
+    parts = []
+    for name in ("ucrtbase.dll", "vcruntime140.dll", "python38.dll"):
+        parts.append("{} = {}".format(name, loaded_module_path(name) or "не загружена"))
+    ucrt = loaded_module_path("ucrtbase.dll")
+    if getattr(sys, "frozen", False) and ucrt and os.path.normcase(sys._MEIPASS) in os.path.normcase(ucrt):
+        raise RuntimeError("ucrtbase.dll загружена из сборки, а не из системы: " + "; ".join(parts))
+    return "; ".join(parts)
 
 
 def check_app_dir_writable():
@@ -166,6 +207,8 @@ def run_checks():
     environment(report)
     check(report, "tkinter", check_tk)
     check(report, "libvips", check_vips)
+    if sys.platform == "win32":
+        check(report, "CRT и Python", check_runtime_dlls)
     check(report, "Конвертация несжатого TIFF", check_conversion("none"))
     check(report, "Конвертация LZW TIFF", check_conversion("lzw"))
     try:

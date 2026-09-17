@@ -38,12 +38,16 @@ jobs:
         run: python -m PyInstaller packaging/smoke.spec --noconfirm --distpath dist --workpath build/pyinstaller
 
       - name: Check bundle imports for Windows 7
-        continue-on-error: true
         run: python scripts/check_pe_imports.py dist/Xray2JpegSmoke --report dist/Xray2JpegSmoke/pe_imports_report.txt
 
       - name: Run smoke checks headless
         shell: pwsh
+        env:
+          # Собранный exe обязан брать DLL из своей сборки, а не из build/vips.
+          XRAY2JPEG_VIPS_DIR: ""
         run: |
+          if (Test-Path dist\Xray2JpegSmoke\_internal\ucrtbase.dll) { throw "ucrtbase.dll попал в сборку" }
+          Write-Host ("DLL libvips в сборке: " + (Get-ChildItem dist\Xray2JpegSmoke\_internal\vips\*.dll).Count)
           $process = Start-Process -FilePath dist\Xray2JpegSmoke\Xray2JpegSmoke.exe -ArgumentList "--no-gui" -Wait -PassThru
           Get-Content -Encoding UTF8 dist\Xray2JpegSmoke\smoke_report.txt
           Remove-Item dist\Xray2JpegSmoke\smoke_report.txt
